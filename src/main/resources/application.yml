@@ -1,0 +1,110 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: shared-docs-backend
+  
+  # 允许循环引用（WebSocket模块需要）
+  main:
+    allow-circular-references: true
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/shared_docs_platform?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+  
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT:6379}
+      database: 0
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+  
+  # RabbitMQ配置
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 500MB
+      file-size-threshold: 5MB
+
+# MyBatis-Plus配置
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: org.example.shareddocs.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# MinIO配置
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: shared-docs-media
+  chunk-bucket-name: shared-docs-chunks
+
+# JWT配置
+jwt:
+  # 生产环境请更换为更强的密钥（建议使用环境变量）
+  # 可以使用以下命令生成：openssl rand -base64 64
+  secret: "S3cur3K3y!@#2024$%^SharedDocs&*()Platform+Secure-Key_9876543210"
+  expiration: 86400000  # 24小时（毫秒）
+  refresh-expiration: 604800000  # 7天
+
+# WebSocket配置
+websocket:
+  endpoint: /ws
+  allowed-origins: "*"
+  heartbeat-timeout: 30000  # 心跳超时（毫秒）
+  max-session-per-document: 50  # 单文档最大会话数
+
+# 文档配置
+document:
+  auto-save-interval: 30000  # 自动保存间隔（毫秒）
+  version-snapshot-interval: 600000  # 版本快照间隔（10分钟）
+  max-content-size: 10485760  # 最大内容大小（10MB）
+  operation-batch-size: 100  # 操作批处理大小
+
+# 媒体配置
+media:
+  chunk-size: 5242880  # 分块大小5MB
+  allowed-image-types: ["image/jpeg", "image/png", "image/gif", "image/webp"]
+  allowed-video-types: ["video/mp4", "video/webm", "video/ogg"]
+  max-image-size: 20971520  # 最大图片大小20MB
+  max-video-size: 209715200  # 最大视频大小200MB
+  thumbnail-width: 300
+  thumbnail-height: 200
+
+# 日志配置
+logging:
+  level:
+    org.example.shareddocs: DEBUG
+    org.springframework.web: INFO
+    org.springframework.web.socket: DEBUG
