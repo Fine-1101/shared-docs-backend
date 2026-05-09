@@ -37,13 +37,26 @@ public class VersionServiceImpl extends ServiceImpl<DocumentVersionMapper, Docum
     @Transactional
     public DocumentVersion createVersionSnapshot(Long documentId, String content, 
                                                 String changeDescription, Long userId) {
-        // 获取当前最大版本号
+        // 检查内容是否为空
+        if (content == null || content.trim().isEmpty()) {
+            log.debug("文档 " + documentId + " 内容为空，跳过版本创建");
+            return null;
+        }
+        
+        // 获取最新版本
         LambdaQueryWrapper<DocumentVersion> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DocumentVersion::getDocumentId, documentId)
                .orderByDesc(DocumentVersion::getVersionNumber)
                .last("LIMIT 1");
         DocumentVersion lastVersion = getOne(wrapper);
         
+        // ✅ 检查内容是否发生变化
+        if (lastVersion != null && content.equals(lastVersion.getContentSnapshot())) {
+            log.debug("文档 " + documentId + " 内容未变化，跳过版本创建");
+            return lastVersion;  // 返回最新版本，不创建新版本
+        }
+        
+        // 计算下一个版本号
         int nextVersion = (lastVersion != null ? lastVersion.getVersionNumber() : 0) + 1;
         
         // 创建新版本
@@ -51,11 +64,13 @@ public class VersionServiceImpl extends ServiceImpl<DocumentVersionMapper, Docum
         version.setDocumentId(documentId);
         version.setVersionNumber(nextVersion);
         version.setContentSnapshot(content);
-        version.setChangeDescription(changeDescription != null ? changeDescription : "自动保存");
+        version.setChangeDescription(changeDescription != null ? changeDescription : "手动保存");
         version.setCreatedBy(userId);
         version.setCreatedAt(LocalDateTime.now());
         
         save(version);
+        
+        //log.info("✅ 为文档 " + documentId + " 创建版本 " + nextVersion + "，描述: " + version.getChangeDescription());
         return version;
     }
     

@@ -59,46 +59,15 @@ public class DocumentScheduledTask {
     }
     
     /**
-     * 创建版本快照任务（每10分钟执行一次）
-     * 只有当文档内容发生变化时才会保存新版本
+     * 创建版本快照任务（已禁用）
+     * 注：现在改为手动触发（用户点击保存或退出时）
      */
-    @Scheduled(fixedRate = 600000)  // 10分钟 = 600000毫秒
+    // @Scheduled(fixedRate = 600000)  // 已禁用定时任务
     public void createVersionSnapshots() {
-        log.info("🔄 执行版本快照任务");
+        log.info("🔄 执行版本快照任务（手动触发模式）");
         
-        // 获取所有活跃文档
-        List<Document> documents = documentService.list();
-        int savedCount = 0;
-        int skippedCount = 0;
-        
-        for (Document doc : documents) {
-            if (doc.getIsDeleted() == 0) {
-                try {
-                    // 检查内容是否发生变化
-                    if (shouldCreateSnapshot(doc)) {
-                        // 为文档创建版本快照
-                        versionService.createVersionSnapshot(
-                                doc.getId(),
-                                doc.getContent(),
-                                "自动保存",
-                                doc.getCreatorId()
-                        );
-                        savedCount++;
-                        log.info("✅ 为文档 {} 创建版本快照: title={}, contentLength={}", 
-                                doc.getId(), doc.getTitle(), 
-                                doc.getContent() != null ? doc.getContent().length() : 0);
-                    } else {
-                        skippedCount++;
-                        log.debug("⏭️ 跳过文档 {}：内容未变化", doc.getId());
-                    }
-                } catch (Exception e) {
-                    log.error("❌ 为文档 {} 创建版本快照失败: {}", doc.getId(), e.getMessage(), e);
-                }
-            }
-        }
-        
-        log.info("📊 版本快照任务完成: 总计={}, 保存={}, 跳过={}", 
-                documents.size(), savedCount, skippedCount);
+        // 此方法已不再自动执行，改为通过 WebSocket 消息手动触发
+        // 如果需要手动执行，可通过 Admin API 调用
     }
     
     /**

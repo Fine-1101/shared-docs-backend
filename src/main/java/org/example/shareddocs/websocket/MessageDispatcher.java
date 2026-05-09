@@ -72,6 +72,7 @@ public class MessageDispatcher {
     private void initDataTypeMap() {
         dataTypeMap.put("JOIN_DOCUMENT", JoinDocumentData.class);
         dataTypeMap.put("LEAVE_DOCUMENT", null);  // 没有data
+        dataTypeMap.put("SAVE_VERSION", null);  // 没有data
         dataTypeMap.put("OPERATION", OperationData.class);
         dataTypeMap.put("CURSOR_MOVE", CursorMoveData.class);
         dataTypeMap.put("SYNC_REQUEST", SyncRequestData.class);

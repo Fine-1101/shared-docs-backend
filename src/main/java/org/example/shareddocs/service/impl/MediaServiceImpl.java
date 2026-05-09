@@ -113,7 +113,8 @@ public class MediaServiceImpl extends ServiceImpl<MediaAssetMapper, MediaAsset> 
         if (mediaAsset == null) {
             return null;
         }
-        return "/api/media/" + mediaId;
+        // 返回完整的存储路径，供 Controller 使用
+        return mediaAsset.getStoragePath();
     }
     
     @Override

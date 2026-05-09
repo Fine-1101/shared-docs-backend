@@ -16,6 +16,7 @@ public enum MessageType {
     
     JOIN_DOCUMENT("join_document", "加入文档"),
     LEAVE_DOCUMENT("leave_document", "离开文档"),
+    SAVE_VERSION("save_version", "保存版本"),  // ✅ 新增：手动保存版本
     OPERATION("operation", "编辑操作"),
     OPERATION_BROADCAST("operation_broadcast", "操作广播"),
     CURSOR_MOVE("cursor_move", "光标移动"),

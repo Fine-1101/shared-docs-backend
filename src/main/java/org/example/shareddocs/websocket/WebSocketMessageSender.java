@@ -33,7 +33,10 @@ public class WebSocketMessageSender {
         try {
             if (session != null && session.isOpen()) {
                 String json = objectMapper.writeValueAsString(message);
-                session.sendMessage(new TextMessage(json));
+                // 同步发送消息，避免并发写入导致 WebSocket 状态异常
+                synchronized (session) {
+                    session.sendMessage(new TextMessage(json));
+                }
             }
         } catch (IOException e) {
             log.error("发送消息失败: {}", e.getMessage(), e);

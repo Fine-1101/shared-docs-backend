@@ -3,6 +3,7 @@ package org.example.shareddocs.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.shareddocs.common.result.PageResult;
 import org.example.shareddocs.common.result.Result;
 import org.example.shareddocs.dto.request.ChunkUploadRequest;
@@ -22,12 +23,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
  * 媒体控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/media")
 @RequiredArgsConstructor
@@ -132,26 +135,51 @@ public class MediaController {
     @GetMapping("/{mediaId}")
     public ResponseEntity<Resource> getFile(@PathVariable Long mediaId) {
         try {
-            String url = mediaService.getFileUrl(mediaId);
-            if (url == null) {
+            String storagePath = mediaService.getFileUrl(mediaId);
+            if (storagePath == null) {
                 return ResponseEntity.notFound().build();
             }
             
-            Path filePath = Paths.get(url.replace("/api/media/", ""));
+            Path filePath = Paths.get(storagePath);
             Resource resource = new UrlResource(filePath.toUri());
             
             if (!resource.exists() || !resource.isReadable()) {
+                log.error("文件不存在或不可读: {}", storagePath);
                 return ResponseEntity.notFound().build();
             }
             
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, 
-                           "attachment; filename=\"" + resource.getFilename() + "\"")
-                    .body(resource);
+            // 获取文件的 MIME 类型
+            MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            String mimeType = Files.probeContentType(filePath);
+            if (mimeType != null) {
+                mediaType = MediaType.parseMediaType(mimeType);
+            }
+            
+            // 图片类型直接在浏览器显示，其他类型下载
+            if (mediaType.includes(MediaType.IMAGE_JPEG) || 
+                mediaType.includes(MediaType.IMAGE_PNG) ||
+                mediaType.includes(MediaType.IMAGE_GIF) ||
+                mediaType.getSubtype().startsWith("image")) {
+                // 图片：内联显示
+                return ResponseEntity.ok()
+                        .contentType(mediaType)
+                        .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000")
+                        .body(resource);
+            } else {
+                // 其他文件：下载
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, 
+                               "attachment; filename=\"" + resource.getFilename() + "\"")
+                        .body(resource);
+            }
                     
         } catch (MalformedURLException e) {
+            log.error("文件URL格式错误", e);
             return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("获取文件失败", e);
+            return ResponseEntity.internalServerError().build();
         }
     }
     

@@ -8,12 +8,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.shareddocs.common.result.PageResult;
 import org.example.shareddocs.common.result.Result;
 import org.example.shareddocs.dto.request.CreateDocumentRequest;
+import org.example.shareddocs.dto.request.DocumentExportRequest;
 import org.example.shareddocs.dto.request.UpdateDocumentRequest;
 import org.example.shareddocs.dto.response.DocumentResponse;
 import org.example.shareddocs.entity.Document;
 import org.example.shareddocs.entity.DocumentVersion;
 import org.example.shareddocs.mapper.DocumentVersionMapper;
+import org.example.shareddocs.service.DocumentExportService;
 import org.example.shareddocs.service.DocumentService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -31,6 +34,7 @@ public class DocumentController {
     
     private final DocumentService documentService;
     private final DocumentVersionMapper documentVersionMapper;
+    private final DocumentExportService documentExportService;
     
     /**
      * 创建文档
@@ -229,5 +233,36 @@ public class DocumentController {
         data.put("creatorId", document.getCreatorId());
         
         return Result.success("加入成功", data);
+    }
+    
+    /**
+     * 导出文档（支持 Markdown 和 HTML 格式）
+     */
+    @PostMapping("/{docId}/export")
+    public ResponseEntity<byte[]> exportDocument(@PathVariable String docId,
+                                                  @Valid @RequestBody DocumentExportRequest exportRequest) {
+        log.info("收到文档导出请求: docId={}, format={}", docId, exportRequest.getFormat());
+        
+        Long documentId;
+        
+        // 判断是数字ID还是UUID
+        try {
+            documentId = Long.parseLong(docId);
+        } catch (NumberFormatException e) {
+            // 按UUID查询
+            Document document = documentService.lambdaQuery()
+                    .eq(org.example.shareddocs.entity.Document::getDocUuid, docId)
+                    .eq(org.example.shareddocs.entity.Document::getIsDeleted, 0)
+                    .one();
+            if (document == null) {
+                log.warn("文档不存在: docId={}", docId);
+                throw new RuntimeException("文档不存在");
+            }
+            documentId = document.getId();
+            log.info("通过UUID找到文档ID: uuid={}, documentId={}", docId, documentId);
+        }
+        
+        // 调用导出服务
+        return documentExportService.exportDocument(documentId, exportRequest.getFormat());
     }
 }

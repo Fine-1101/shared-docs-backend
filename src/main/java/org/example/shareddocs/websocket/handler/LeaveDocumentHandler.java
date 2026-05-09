@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.shareddocs.common.enums.MessageType;
 import org.example.shareddocs.dto.websocket.UserEventData;
 import org.example.shareddocs.dto.websocket.WebSocketMessage;
+import org.example.shareddocs.entity.Document;
 import org.example.shareddocs.entity.User;
+import org.example.shareddocs.mapper.DocumentMapper;
 import org.example.shareddocs.mapper.UserMapper;
+import org.example.shareddocs.service.VersionService;
 import org.example.shareddocs.websocket.WebSocketMessageSender;
 import org.example.shareddocs.websocket.WebSocketSessionManager;
 import org.springframework.stereotype.Component;
@@ -26,6 +29,8 @@ public class LeaveDocumentHandler implements MessageHandler {
     private final WebSocketSessionManager sessionManager;
     private final WebSocketMessageSender messageSender;
     private final UserMapper userMapper;
+    private final DocumentMapper documentMapper;
+    private final VersionService versionService;
     
     @Override
     public void handle(WebSocketSession session, WebSocketMessage message) {
@@ -52,6 +57,9 @@ public class LeaveDocumentHandler implements MessageHandler {
         
         log.info("用户 {} 离开文档 {}", userId, documentId);
         
+        // ✅ 用户离开时自动保存版本（仅当内容发生变化时）
+        saveVersionOnLeave(documentId, userId);
+        
         // 从文档中移除会话
         sessionManager.removeSessionFromDocument(documentId, session.getId());
         
@@ -71,6 +79,34 @@ public class LeaveDocumentHandler implements MessageHandler {
     @Override
     public String getSupportedMessageType() {
         return "LEAVE_DOCUMENT";
+    }
+    
+    /**
+     * 用户离开时保存版本（仅当内容发生变化时）
+     */
+    private void saveVersionOnLeave(Long documentId, Long userId) {
+        try {
+            // 获取当前文档
+            Document document = documentMapper.selectById(documentId);
+            if (document == null || document.getContent() == null || document.getContent().trim().isEmpty()) {
+                log.debug("文档 {} 内容为空，跳过版本保存", documentId);
+                return;
+            }
+            
+            // 调用版本服务创建快照（内部会检查内容是否变化）
+            versionService.createVersionSnapshot(
+                    documentId,
+                    document.getContent(),
+                    "用户退出时自动保存",
+                    userId
+            );
+            
+            log.info("✅ 用户 {} 离开时已保存文档 {} 的版本", userId, documentId);
+        } catch (Exception e) {
+            // 版本保存失败不影响用户离开流程
+            log.error(" 用户离开时保存版本失败: documentId={}, userId={}, error={}", 
+                    documentId, userId, e.getMessage(), e);
+        }
     }
     
     /**

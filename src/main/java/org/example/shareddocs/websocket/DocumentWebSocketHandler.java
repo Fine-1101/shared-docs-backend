@@ -10,6 +10,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
+import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -82,6 +84,12 @@ public class DocumentWebSocketHandler extends AbstractWebSocketHandler {
     
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        // 忽略应用关闭时的连接中断异常，这属于正常现象
+        if (exception instanceof IOException && exception.getCause() instanceof ClosedChannelException) {
+            log.debug("WebSocket连接已关闭（应用关闭时正常现象）: {}", session.getId());
+            return;
+        }
+        
         log.error("WebSocket传输错误: {}", exception.getMessage(), exception);
         sessionManager.removeSession(session);
     }

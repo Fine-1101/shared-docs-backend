@@ -27,7 +27,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Set<String> WHITE_LIST = Set.of(
             "/api/users/login",
             "/api/users/register",
-            "/api/ws"  // WebSocket 握手请求，由 AuthHandshakeInterceptor 处理
+            "/api/ws",  // WebSocket 握手请求，由 AuthHandshakeInterceptor 处理
+            "/api/media"  // 媒体文件访问（图片、视频等），需要公开访问支持
     );
 
     @Override
@@ -107,13 +108,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 从请求头中提取Token
+     * 从请求头中提取Token，如果请求头中没有，则尝试从URL参数中获取
      */
     private String getTokenFromRequest(HttpServletRequest request) {
+        // 1. 优先从 Header 获取
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
+        // 2. 尝试从 URL 参数获取（用于 <img> 标签等无法携带 Header 的场景）
+        String paramToken = request.getParameter("token");
+        if (paramToken != null && !paramToken.trim().isEmpty()) {
+            log.debug("从 URL 参数中获取到 Token");
+            return paramToken;
+        }
+
         return null;
     }
 
