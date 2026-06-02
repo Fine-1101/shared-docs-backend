@@ -1,0 +1,177 @@
+# =============================================================================
+# Shared Docs Backend - Git Ignore Configuration
+# =============================================================================
+
+# ----------------------------
+# Maven 构建产物
+# ----------------------------
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ----------------------------
+# IDE 配置文件
+# ----------------------------
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ----------------------------
+# 编译产物
+# ----------------------------
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# ----------------------------
+# 日志文件
+# ----------------------------
+*.log
+logs/
+*.log.*
+
+# ----------------------------
+# 临时文件
+# ----------------------------
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# 环境变量和敏感信息
+# ----------------------------
+.env
+.env.local
+.env.*.local
+application-local.properties
+application-local.yml
+application-dev.properties
+application-dev.yml
+
+# ----------------------------
+# 数据库文件
+# ----------------------------
+*.db
+*.sqlite
+*.h2.db
+
+# ----------------------------
+# 文档和笔记（可选，根据需要调整）
+# ----------------------------
+# 保留 Markdown 文档，但忽略临时文件
+*.md.backup
+*.md.bak
+
+# ----------------------------
+# Node.js（如果有前端项目）
+# ----------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ----------------------------
+# 测试覆盖率报告
+# ----------------------------
+coverage/
+.nyc_output/
+jacoco/
+
+# ----------------------------
+# Docker
+# ----------------------------
+docker-compose.override.yml
+
+# ----------------------------
+# Gradle（如果使用）
+# ----------------------------
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ----------------------------
+# OS 特定文件
+# ----------------------------
+
+# Windows
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+
+# ----------------------------
+# 其他
+# ----------------------------
+*.pid
+*.seed
+*.pid.lock
+lib-cov/
+selenium-debug.log
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
